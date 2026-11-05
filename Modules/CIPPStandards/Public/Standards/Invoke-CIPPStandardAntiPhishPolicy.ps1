@@ -22,29 +22,20 @@ function Invoke-CIPPStandardAntiPhishPolicy {
             "mdo_phishthresholdlevel"
             "CIS M365 5.0 (2.1.7)"
             "NIST CSF 2.0 (DE.CM-09)"
-            "ORCA104"
             "ORCA115"
             "ORCA180"
             "ORCA220"
             "ORCA221"
             "ORCA222"
             "ORCA223"
-            "ORCA228"
-            "ORCA229"
             "ORCA230"
-            "ORCA233"
-            "ORCA234"
-            "ORCA235"
-            "ORCA239"
-            "ORCA242"
-            "ORCA243"
-            "ORCA244"
-            "ZTNA21784"
-            "ZTNA21817"
-            "ZTNA21819"
-            "CISAMSEXO111"
-            "CISAMSEXO112"
-            "CISAMSEXO113"
+            "ORCA111"
+            "ORCA112"
+            "ORCA116"
+            "ORCA119"
+            "ORCA123"
+            "ORCA224"
+            "ORCA241"
         ADDEDCOMPONENT
             {"type":"textField","name":"standards.AntiPhishPolicy.name","label":"Policy Name","required":true,"defaultValue":"CIPP Default Anti-Phishing Policy"}
             {"type":"number","label":"Phishing email threshold. (Default 1)","name":"standards.AntiPhishPolicy.PhishThresholdLevel","defaultValue":1,"validators":{"min":{"value":1,"message":"Minimum value is 1"},"max":{"value":4,"message":"Maximum value is 4"}}}
@@ -77,16 +68,20 @@ function Invoke-CIPPStandardAntiPhishPolicy {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'AntiPhishPolicy' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'AntiPhishPolicy' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
     } #we're done.
     ##$Rerun -Type Standard -Tenant $Tenant -Settings $Settings 'AntiPhishPolicy'
+
+    foreach ($Field in @('AuthenticationFailAction', 'SpoofQuarantineTag', 'MailboxIntelligenceProtectionAction', 'MailboxIntelligenceQuarantineTag', 'TargetedUserProtectionAction', 'TargetedUserQuarantineTag', 'TargetedDomainProtectionAction', 'TargetedDomainQuarantineTag')) {
+        if ($null -ne $Settings.$Field.value) { $Settings.$Field = $Settings.$Field.value }
+    }
 
     $TenantCapabilities = Get-CIPPTenantCapabilities -TenantFilter $Tenant
     $MDOLicensed = $TenantCapabilities.ATP_ENTERPRISE -eq $true
@@ -126,6 +121,13 @@ function Invoke-CIPPStandardAntiPhishPolicy {
 
     $CurrentState = $ExistingPolicy |
         Select-Object Name, Enabled, PhishThresholdLevel, EnableMailboxIntelligence, EnableMailboxIntelligenceProtection, EnableSpoofIntelligence, EnableFirstContactSafetyTips, EnableSimilarUsersSafetyTips, EnableSimilarDomainsSafetyTips, EnableUnusualCharactersSafetyTips, EnableUnauthenticatedSender, EnableViaTag, AuthenticationFailAction, SpoofQuarantineTag, MailboxIntelligenceProtectionAction, MailboxIntelligenceQuarantineTag, TargetedUserProtectionAction, TargetedUserQuarantineTag, TargetedDomainProtectionAction, TargetedDomainQuarantineTag, EnableOrganizationDomainsProtection, EnableTargetedDomainsProtection, EnableTargetedUserProtection
+
+    # Get-AntiPhishPolicy only populates Enabled for the built-in default policy; on a custom policy
+    # the active state lives on its rule's State (see Invoke-ListAntiPhishingFilters). Without this
+    # the compare shows Enabled = null and the policy reads Non-Compliant even while it is active.
+    if ($CurrentState -and $null -ne $ExistingRule.State) {
+        $CurrentState.Enabled = $ExistingRule.State -eq 'Enabled'
+    }
 
     if ($MDOLicensed) {
         $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
@@ -274,7 +276,7 @@ function Invoke-CIPPStandardAntiPhishPolicy {
         if ($RuleStateIsCorrect -eq $false) {
             $cmdParams = @{
                 Priority          = 0
-                RecipientDomainIs = $AcceptedDomains.Name
+                RecipientDomainIs = ConvertTo-SafeArray -Field $AcceptedDomains.Name
             }
 
             if ($RuleState.AntiPhishPolicy -ne $PolicyName) {
@@ -312,9 +314,7 @@ function Invoke-CIPPStandardAntiPhishPolicy {
     }
 
     if ($Settings.report -eq $true) {
-        $FieldValue = $StateIsCorrect ? $true : $CurrentState
-        Set-CIPPStandardsCompareField -FieldName 'standards.AntiPhishPolicy' -FieldValue $FieldValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'AntiPhishPolicy' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
+        Set-CIPPStandardsCompareField -FieldName 'standards.AntiPhishPolicy' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
     }
 
 }

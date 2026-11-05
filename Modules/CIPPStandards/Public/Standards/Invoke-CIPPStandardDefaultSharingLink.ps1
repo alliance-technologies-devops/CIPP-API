@@ -16,8 +16,6 @@ function Invoke-CIPPStandardDefaultSharingLink {
             "CIS M365 5.0 (7.2.7)"
             "CIS M365 5.0 (7.2.11)"
             "CISA (MS.SPO.1.4v1)"
-            "ZTNA21803"
-            "ZTNA21804"
         EXECUTIVETEXT
             Configures SharePoint default sharing links to implement the principle of least privilege for document sharing. This security measure reduces the risk of accidental data modification while maintaining collaboration functionality, requiring users to explicitly select Edit permissions when necessary. The sharing type setting controls whether links are restricted to specific recipients or available to the entire organization. This reduces the risk of accidental data exposure through link sharing.
         ADDEDCOMPONENT
@@ -36,16 +34,17 @@ function Invoke-CIPPStandardDefaultSharingLink {
             "SHAREPOINTSTANDARD"
             "SHAREPOINTENTERPRISE"
             "SHAREPOINTENTERPRISE_EDU"
+            "SHAREPOINTENTERPRISE_GOV"
             "ONEDRIVE_BASIC"
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'DefaultSharingLink' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'DefaultSharingLink' -TenantFilter $Tenant -Preset SharePoint
 
     # Determine the desired sharing link type (default to Internal if not specified)
 
@@ -136,7 +135,6 @@ function Invoke-CIPPStandardDefaultSharingLink {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'DefaultSharingLink' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
         if ($StateIsCorrect) {
             $FieldValue = $true
         } else {

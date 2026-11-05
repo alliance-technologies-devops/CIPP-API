@@ -16,8 +16,6 @@ function Invoke-CIPPStandardsharingCapability {
             "CIS M365 5.0 (7.2.3)"
             "CISA (MS.AAD.14.1v1)"
             "CISA (MS.SPO.1.1v1)"
-            "ZTNA21803"
-            "ZTNA21804"
         EXECUTIVETEXT
             Defines the organization's default policy for sharing files and folders in SharePoint and OneDrive, balancing collaboration needs with security requirements. This fundamental setting determines whether employees can share with external users, anonymous links, or only internal colleagues.
         ADDEDCOMPONENT
@@ -36,16 +34,17 @@ function Invoke-CIPPStandardsharingCapability {
             "SHAREPOINTSTANDARD"
             "SHAREPOINTENTERPRISE"
             "SHAREPOINTENTERPRISE_EDU"
+            "SHAREPOINTENTERPRISE_GOV"
             "ONEDRIVE_BASIC"
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingCapability' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingCapability' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -57,10 +56,6 @@ function Invoke-CIPPStandardsharingCapability {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
         Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the sharingCapability state for $Tenant. Error: $ErrorMessage" -Sev Error
         return
-    }
-
-    if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'sharingCapability' -FieldValue $CurrentInfo.sharingCapability -StoreAs string -Tenant $Tenant
     }
 
     # Get level value using null-coalescing operator

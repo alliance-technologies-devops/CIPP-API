@@ -19,6 +19,7 @@ function Invoke-CIPPStandardDisableAppCreation {
             "Essential 8 (1175)"
             "NIST CSF 2.0 (PR.AA-05)"
             "EIDSCAAP10"
+            "ZTNA21807"
         EXECUTIVETEXT
             Prevents regular employees from creating application registrations that could be used to maintain unauthorized access to company systems. This security measure ensures that only authorized IT personnel can create applications, reducing the risk of persistent security breaches through malicious applications.
         ADDEDCOMPONENT
@@ -34,7 +35,7 @@ function Invoke-CIPPStandardDisableAppCreation {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -81,8 +82,6 @@ function Invoke-CIPPStandardDisableAppCreation {
     }
 
     if ($Settings.report -eq $true) {
-        $State = -not $CurrentInfo.defaultUserRolePermissions.allowedToCreateApps
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableAppCreation' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'UserAppCreationDisabled' -FieldValue $State -StoreAs bool -Tenant $tenant
     }
 }

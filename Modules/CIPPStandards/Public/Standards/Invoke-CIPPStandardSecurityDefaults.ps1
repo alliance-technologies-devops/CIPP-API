@@ -14,7 +14,6 @@ function Invoke-CIPPStandardSecurityDefaults {
             Entra (AAD) Standards
         TAG
             "CISA (MS.AAD.11.1v1)"
-            "ZTNA21843"
         EXECUTIVETEXT
             Activates Microsoft's baseline security configuration that requires multi-factor authentication and blocks legacy authentication methods. This provides essential security protection for organizations without complex conditional access policies, significantly improving security posture with minimal configuration.
         ADDEDCOMPONENT
@@ -28,7 +27,7 @@ function Invoke-CIPPStandardSecurityDefaults {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -68,7 +67,6 @@ function Invoke-CIPPStandardSecurityDefaults {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SecurityDefaults' -FieldValue $SecureDefaultsState.IsEnabled -StoreAs bool -Tenant $tenant
         $CurrentData = @{
             SecurityDefaultsEnabled = $SecureDefaultsState.IsEnabled
         }

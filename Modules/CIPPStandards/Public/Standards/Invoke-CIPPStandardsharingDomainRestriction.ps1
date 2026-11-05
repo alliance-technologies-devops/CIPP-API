@@ -16,8 +16,6 @@ function Invoke-CIPPStandardsharingDomainRestriction {
             "CIS M365 5.0 (7.2.6)"
             "CISA (MS.AAD.14.3v1)"
             "CISA (MS.SPO.1.3v1)"
-            "ZTNA21803"
-            "ZTNA21804"
         EXECUTIVETEXT
             Controls which external domains employees can share files with, enabling secure collaboration with trusted partners while blocking sharing with unauthorized organizations. This targeted approach maintains necessary business relationships while preventing data exposure to unknown entities.
         ADDEDCOMPONENT
@@ -35,16 +33,17 @@ function Invoke-CIPPStandardsharingDomainRestriction {
             "SHAREPOINTSTANDARD"
             "SHAREPOINTENTERPRISE"
             "SHAREPOINTENTERPRISE_EDU"
+            "SHAREPOINTENTERPRISE_GOV"
             "ONEDRIVE_BASIC"
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingDomainRestriction' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'sharingDomainRestriction' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -116,17 +115,16 @@ function Invoke-CIPPStandardsharingDomainRestriction {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'sharingDomainRestriction' -FieldValue [bool]$StateIsCorrect -StoreAs bool -Tenant $tenant
 
         $CurrentValue = @{
             sharingDomainRestrictionMode = $CurrentState.sharingDomainRestrictionMode
-            sharingAllowedDomainList     = $CurrentState.sharingAllowedDomainList
-            sharingBlockedDomainList     = $CurrentState.sharingBlockedDomainList
+            sharingAllowedDomainList     = @($CurrentState.sharingAllowedDomainList ?? @())
+            sharingBlockedDomainList     = @($CurrentState.sharingBlockedDomainList ?? @())
         }
         $ExpectedValue = @{
             sharingDomainRestrictionMode = $mode
-            sharingAllowedDomainList     = if ($mode -eq 'allowList') { $SelectedDomains } else { @() }
-            sharingBlockedDomainList     = if ($mode -eq 'blockList') { $SelectedDomains } else { @() }
+            sharingAllowedDomainList     = @(if ($mode -eq 'allowList') { $SelectedDomains } else { @() })
+            sharingBlockedDomainList     = @(if ($mode -eq 'blockList') { $SelectedDomains } else { @() })
         }
         Set-CIPPStandardsCompareField -FieldName 'standards.sharingDomainRestriction' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -Tenant $Tenant
     }

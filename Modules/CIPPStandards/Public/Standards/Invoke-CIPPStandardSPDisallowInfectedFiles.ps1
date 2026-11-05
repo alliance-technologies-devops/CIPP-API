@@ -16,7 +16,6 @@ function Invoke-CIPPStandardSPDisallowInfectedFiles {
             "CIS M365 5.0 (7.3.1)"
             "CISA (MS.SPO.3.1v1)"
             "NIST CSF 2.0 (DE.CM-09)"
-            "ZTNA21817"
         EXECUTIVETEXT
             Prevents employees from downloading files that have been identified as containing malware or viruses from SharePoint and OneDrive. This security measure protects against malware distribution through file sharing while maintaining access to clean, safe documents.
         ADDEDCOMPONENT
@@ -34,16 +33,17 @@ function Invoke-CIPPStandardSPDisallowInfectedFiles {
             "SHAREPOINTSTANDARD"
             "SHAREPOINTENTERPRISE"
             "SHAREPOINTENTERPRISE_EDU"
+            "SHAREPOINTENTERPRISE_GOV"
             "ONEDRIVE_BASIC"
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisallowInfectedFiles' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU','ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPDisallowInfectedFiles' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -90,7 +90,6 @@ function Invoke-CIPPStandardSPDisallowInfectedFiles {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPDisallowInfectedFiles' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             DisallowInfectedFileDownload = $CurrentState.DisallowInfectedFileDownload

@@ -15,8 +15,6 @@ function Invoke-CIPPStandardSPEmailAttestation {
         TAG
             "CIS M365 5.0 (7.2.10)"
             "CISA (MS.SPO.1.6v1)"
-            "ZTNA21803"
-            "ZTNA21804"
         EXECUTIVETEXT
             Requires external users to periodically re-verify their identity through email verification codes when accessing SharePoint resources, adding an extra security layer for external collaboration. This helps ensure continued legitimacy of external access over time.
         ADDEDCOMPONENT
@@ -35,16 +33,17 @@ function Invoke-CIPPStandardSPEmailAttestation {
             "SHAREPOINTSTANDARD"
             "SHAREPOINTENTERPRISE"
             "SHAREPOINTENTERPRISE_EDU"
+            "SHAREPOINTENTERPRISE_GOV"
             "ONEDRIVE_BASIC"
             "ONEDRIVE_ENTERPRISE"
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'SPEmailAttestation' -TenantFilter $Tenant -RequiredCapabilities @('SHAREPOINTWAC', 'SHAREPOINTSTANDARD', 'SHAREPOINTENTERPRISE', 'SHAREPOINTENTERPRISE_EDU', 'ONEDRIVE_BASIC', 'ONEDRIVE_ENTERPRISE')
+    $TestResult = Test-CIPPStandardLicense -StandardName 'SPEmailAttestation' -TenantFilter $Tenant -Preset SharePoint
 
     if ($TestResult -eq $false) {
         return $true
@@ -97,7 +96,6 @@ function Invoke-CIPPStandardSPEmailAttestation {
     }
 
     if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'SPEmailAttestation' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
 
         $CurrentValue = @{
             EmailAttestationReAuthDays = $CurrentState.EmailAttestationReAuthDays

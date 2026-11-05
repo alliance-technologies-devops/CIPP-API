@@ -8,6 +8,11 @@ function Invoke-CippTestZTNA21820 {
     $TestId = 'ZTNA21820'
 
     try {
+        if (-not (Test-CIPPStandardLicense -StandardName $TestId -TenantFilter $Tenant -Preset PIM -SkipLog)) {
+            Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Privileged Identity Management. Required capabilities: AAD_PREMIUM_P2, Entra_Identity_Governance.' -Risk 'Low' -Name 'Activation alert for all privileged role assignments' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Privileged access'
+            return
+        }
+
         # Get all privileged roles
         $PrivilegedRoles = Get-CippDbRole -TenantFilter $Tenant -IncludePrivilegedRoles
 
@@ -19,23 +24,23 @@ function Invoke-CippTestZTNA21820 {
         # Get all role management policies
         $RoleManagementPolicies = Get-CIPPTestData -TenantFilter $Tenant -Type 'RoleManagementPolicies'
 
-        # Build hashtable for quick policy lookup by role ID
+        # Build hashtable for quick policy lookup by role template ID.
+        # This previously keyed on effectiveRules.target.targetObjects.id — a property that does
+        # not exist on this response (target is {caller, operations, level, inheritableSettings,
+        # enforcedSettings}), so the table was always empty and no policy was ever found.
+        # roleDefinitionId carries the role's TEMPLATE id, which is the correct key.
         $PolicyByRoleId = @{}
         foreach ($Policy in $RoleManagementPolicies) {
-            if ($Policy.scopeId -eq '/' -and $Policy.scopeType -eq 'DirectoryRole') {
-                foreach ($RoleId in $Policy.effectiveRules.target.targetObjects.id) {
-                    if ($RoleId) {
-                        $PolicyByRoleId[$RoleId] = $Policy
-                    }
-                }
+            if ($Policy.scopeId -eq '/' -and $Policy.scopeType -eq 'DirectoryRole' -and $Policy.roleDefinitionId) {
+                $PolicyByRoleId[$Policy.roleDefinitionId] = $Policy
             }
         }
 
         $RolesWithIssues = [System.Collections.Generic.List[object]]::new()
-        $Passed = 'Passed'
 
         foreach ($Role in $PrivilegedRoles) {
-            $Policy = $PolicyByRoleId[$Role.id]
+            # Template id, not the directoryRole instance id — see the note above.
+            $Policy = $PolicyByRoleId[$Role.roleTemplateId]
 
             if (-not $Policy) {
                 $RolesWithIssues.Add(@{
@@ -47,18 +52,16 @@ function Invoke-CippTestZTNA21820 {
                 continue
             }
 
-            # Find notification rule for requestor end-user assignment
-            $NotificationRule = $Policy.effectiveRules | Where-Object {
-                $_.id -like '*Notification_Requestor_EndUser_Assignment*'
-            }
+            # Activation alert sent to admins
+            $NotificationRule = $Policy.rules.Where({
+                $_.id -like '*Notification_Admin_EndUser_Assignment*'
+            })
 
             if ($NotificationRule) {
                 $IsDefaultRecipientsEnabled = $NotificationRule.isDefaultRecipientsEnabled
                 $NotificationRecipients = $NotificationRule.notificationRecipients
 
-                # Check if alert is properly configured
-                if ($IsDefaultRecipientsEnabled -eq $true -and ((-not $NotificationRecipients) -or $NotificationRecipients.Count -eq 0)) {
-                    $Passed = 'Failed'
+                if ($IsDefaultRecipientsEnabled -eq $false -and ((-not $NotificationRecipients) -or $NotificationRecipients.Count -eq 0)) {
                     $RolesWithIssues.Add(@{
                             Role                       = $Role
                             IsDefaultRecipientsEnabled = $IsDefaultRecipientsEnabled
@@ -70,16 +73,17 @@ function Invoke-CippTestZTNA21820 {
             }
         }
 
+        $Passed = if ($RolesWithIssues.Count -eq 0) { 'Passed' } else { 'Failed' }
         if ($RolesWithIssues.Count -eq 0) {
-            $ResultMarkdown = 'Activation alerts are configured for privileged role assignments.'
+            $ResultMarkdown = [System.Text.StringBuilder]::new('Activation alerts are configured for privileged role assignments.')
         } else {
-            $ResultMarkdown = 'Activation alerts are missing or improperly configured for privileged roles.'
+            $ResultMarkdown = [System.Text.StringBuilder]::new('Activation alerts are missing or improperly configured for privileged roles.')
         }
 
         if ($RolesWithIssues.Count -gt 0) {
-            $ResultMarkdown += "`n`n## Roles with missing or misconfigured alerts`n`n"
-            $ResultMarkdown += "| Role display name | Default recipients | Additional recipients |`n"
-            $ResultMarkdown += "| :---------------- | :----------------- | :------------------- |`n"
+            $null = $ResultMarkdown.Append("`n`n## Roles with missing or misconfigured alerts`n`n")
+            $null = $ResultMarkdown.Append("| Role display name | Default recipients | Additional recipients |`n")
+            $null = $ResultMarkdown.Append("| :---------------- | :----------------- | :------------------- |`n")
 
             foreach ($RoleIssue in $RolesWithIssues) {
                 $Role = $RoleIssue.Role
@@ -88,14 +92,16 @@ function Invoke-CippTestZTNA21820 {
 
                 $DefaultRecipientsStatus = if ($RoleIssue.IsDefaultRecipientsEnabled -eq $true) {
                     'Enabled'
-                } else {
+                } elseif ($RoleIssue.IsDefaultRecipientsEnabled -eq $false) {
                     'Disabled'
+                } else {
+                    'N/A'
                 }
                 $Recipients = $RoleIssue.NotificationRecipients
 
-                $ResultMarkdown += "| $DisplayNameLink | $DefaultRecipientsStatus | $Recipients |`n"
+                $null = $ResultMarkdown.Append("| $DisplayNameLink | $DefaultRecipientsStatus | $Recipients |`n")
             }
-            $ResultMarkdown += "`n`n*Not all misconfigured roles may be listed. For performance reasons, this assessment stops at the first detected issue.*`n"
+            $null = $ResultMarkdown.Append("`n`n*Not all misconfigured roles may be listed. For performance reasons, this assessment stops at the first detected issue.*`n")
         }
 
         Add-CippTestResult -TenantFilter $Tenant -TestId $TestId -TestType 'Identity' -Status $Passed -ResultMarkdown $ResultMarkdown -Risk 'Low' -Name 'Activation alert for all privileged role assignments' -UserImpact 'Low' -ImplementationEffort 'Medium' -Category 'Privileged access'

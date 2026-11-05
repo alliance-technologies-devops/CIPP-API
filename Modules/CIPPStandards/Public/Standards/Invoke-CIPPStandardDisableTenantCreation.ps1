@@ -15,7 +15,6 @@ function Invoke-CIPPStandardDisableTenantCreation {
         TAG
             "CIS M365 5.0 (1.2.3)"
             "CISA (MS.AAD.6.1v1)"
-            "ZTNA21772"
             "ZTNA21787"
         EXECUTIVETEXT
             Prevents regular employees from creating new Microsoft 365 organizations, ensuring all new tenants are properly managed and controlled by IT administrators. This prevents unauthorized shadow IT environments and maintains centralized governance over Microsoft 365 resources.
@@ -32,7 +31,7 @@ function Invoke-CIPPStandardDisableTenantCreation {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -84,6 +83,5 @@ function Invoke-CIPPStandardDisableTenantCreation {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableTenantCreation' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'DisableTenantCreation' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }

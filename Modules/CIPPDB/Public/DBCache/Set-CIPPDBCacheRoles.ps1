@@ -27,7 +27,7 @@ function Set-CIPPDBCacheRoles {
                 [PSCustomObject]@{
                     id     = $_.id
                     method = 'GET'
-                    url    = "/directoryRoles/$($_.id)/members?`$select=id,displayName,userPrincipalName"
+                    url    = "/directoryRoles/$($_.id)/members?`$select=id,displayName,userPrincipalName,appId"
                 }
             }
         }
@@ -49,13 +49,11 @@ function Set-CIPPDBCacheRoles {
                 }
             }
 
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $RolesWithMembers
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $RolesWithMembers -Count
+            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $RolesWithMembers -AddCount
             $Roles = $null
             $RolesWithMembers = $null
         } else {
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $Roles
-            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $Roles -Count
+            Add-CIPPDbItem -TenantFilter $TenantFilter -Type 'Roles' -Data $Roles -AddCount
             $Roles = $null
         }
 

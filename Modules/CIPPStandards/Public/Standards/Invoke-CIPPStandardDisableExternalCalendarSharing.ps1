@@ -15,7 +15,6 @@ function Invoke-CIPPStandardDisableExternalCalendarSharing {
         TAG
             "CIS M365 5.0 (1.3.3)"
             "exo_individualsharing"
-            "ZTNA21803"
             "CISAMSEXO62"
         EXECUTIVETEXT
             Prevents employees from sharing their calendars with external parties, protecting sensitive meeting information and internal schedules from unauthorized access. This security measure helps maintain confidentiality of business activities while still allowing internal collaboration.
@@ -37,11 +36,11 @@ function Invoke-CIPPStandardDisableExternalCalendarSharing {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'DisableExternalCalendarSharing' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'DisableExternalCalendarSharing' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -104,6 +103,5 @@ function Invoke-CIPPStandardDisableExternalCalendarSharing {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableExternalCalendarSharing' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'ExternalCalendarSharingDisabled' -FieldValue $CurrentStatus -StoreAs bool -Tenant $tenant
     }
 }

@@ -20,8 +20,6 @@ function Invoke-CIPPStandardDisableGuestDirectory {
             "EIDSCA.ST09"
             "NIST CSF 2.0 (PR.AA-05)"
             "EIDSCAAP07"
-            "EIDSCAST08"
-            "EIDSCAST09"
         EXECUTIVETEXT
             Restricts external guest users from viewing the company's employee directory and organizational structure, protecting sensitive information about staff and internal groups. This security measure prevents unauthorized access to corporate contact information while still allowing necessary collaboration.
         ADDEDCOMPONENT
@@ -36,7 +34,7 @@ function Invoke-CIPPStandardDisableGuestDirectory {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
@@ -84,6 +82,5 @@ function Invoke-CIPPStandardDisableGuestDirectory {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.DisableGuestDirectory' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'DisableGuestDirectory' -FieldValue $CurrentStatus -StoreAs bool -Tenant $tenant
     }
 }

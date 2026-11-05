@@ -14,6 +14,7 @@ function Invoke-CIPPStandardEXOOutboundSpamLimits {
             Exchange Standards
         TAG
             "CIS M365 5.0 (2.1.6)"
+            "ORCA103"
         EXECUTIVETEXT
             Sets limits on how many emails employees can send per hour and per day to prevent spam and protect the organization's email reputation. When limits are exceeded, the system can alert administrators or temporarily block the user, helping detect compromised accounts or prevent abuse.
         ADDEDCOMPONENT
@@ -39,11 +40,11 @@ function Invoke-CIPPStandardEXOOutboundSpamLimits {
         UPDATECOMMENTBLOCK
             Run the Tools\Update-StandardsComments.ps1 script to update this comment block
     .LINK
-        https://docs.cipp.app/user-documentation/tenant/standards/list-standards
+        https://docs.cipp.app/user-documentation/tenant/standards/alignment/templates/available-standards
     #>
 
     param($Tenant, $Settings)
-    $TestResult = Test-CIPPStandardLicense -StandardName 'EXOOutboundSpamLimits' -TenantFilter $Tenant -RequiredCapabilities @('EXCHANGE_S_STANDARD', 'EXCHANGE_S_ENTERPRISE', 'EXCHANGE_S_STANDARD_GOV', 'EXCHANGE_S_ENTERPRISE_GOV', 'EXCHANGE_LITE') #No Foundation because that does not allow powershell access
+    $TestResult = Test-CIPPStandardLicense -StandardName 'EXOOutboundSpamLimits' -TenantFilter $Tenant -Preset Exchange #No Foundation because that does not allow powershell access
 
     if ($TestResult -eq $false) {
         return $true
@@ -138,6 +139,5 @@ function Invoke-CIPPStandardEXOOutboundSpamLimits {
         }
 
         Set-CIPPStandardsCompareField -FieldName 'standards.EXOOutboundSpamLimits' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'OutboundSpamLimitsConfigured' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }
